@@ -79,9 +79,10 @@ function Board(xIsNext,squares,onPlay){	//'lifted' params to Game() function
 		if(xIsNext) nextSquares[index] = "X";
 		else nextSquares[index] = "0";
 		//and flip the boolean:
-		setXIsNext(!xIsNext);
+		//setXIsNext(!xIsNext);
 
-		setSquares(nextSquares);
+		//setSquares(nextSquares);
+		onPlay(nextSquares);
 		
 		console.log({index});
 		console.log({nextSquares});
