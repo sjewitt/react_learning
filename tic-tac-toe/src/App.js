@@ -10,7 +10,7 @@ for each square). This is LIFTING the state
 */
 import {useState} from 'react';
 
-function Square({val,onSquareClick}){	//from parent
+function Square({val,onSquareClick}){	//from parent Board
 	//enable state for this component!!:
 //	const [val,setValue] = useState(null);
 //	
@@ -23,13 +23,11 @@ function Square({val,onSquareClick}){	//from parent
 //			setValue('X');
 //		}
 //	};
-	return <button className="square"
-		onClick={onSquareClick}
-		>{val}</button>;
+	return <button className="square" onClick={onSquareClick}>{val}</button>;
 }
 
 export default function Board(){
-	//declare an array of length 9, representing the squares, that
+	//declare an array of length 9, representing the squares:
 	const [squares, setSquares] = useState(Array(9).fill(null));
 	
 	//function handling the click on a square:
