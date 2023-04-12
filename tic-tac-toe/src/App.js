@@ -21,39 +21,52 @@ function Square( {val,onSquareClick} ){	//from parent Board
 // export default function Board(){
 // function Board(){
 // 'onPlay' is the function ref passed from Game()
-export default function Board(){
-//function Board(xIsNext,squares,onPlay){	//'lifted' params to Game() function
-	//console.log("BOARD: ",xIsNext,squares,onPlay)
+//export default function Board(){
+// function Board(){
+{/* params are REACT params - need to be surrounded by curly braces! */}
+function Board({xIsNext, squares, onPlay}){	//'lifted' params to Game() function
+	//console.log("xIsNext: ",xIsNext);
+	//console.log("squares: ",squares);
+	//console.log("onPlay: ",onPlay);
 	
-	const [xIsNext,setXIsNext] = useState(true);
-	const [squares, setSquares] = useState(Array(9).fill(null));
-	
+	//const [xIsNext,setXIsNext] = useState(true);
+	//const [squares, setSquares] = useState(Array(9).fill(null));
+	//let fish = [null,null,null,null,null,null,null,null];
+	//const fish2 = fish.slice();
+	//console.log(fish, fish2);
 	//function handling the click on a square:
-	function handleClick(index){
-		console.log('HANDLECLICK: ',index, squares);
-		const nextSquares = squares.slice();
+	function handleClick(i){
+		//console.log('HANDLECLICK: ',i, squares);
+
 		
 		// ensure we don't toggle already-filled squares:
 		// note that this returns a winning result AFTER the game has 
 		// completed - it will return 
 		// only if the game is ALREADY won!
 		// but see function call above!
-		if( squares[index] || checkMoveResult(squares) ){
+		// if( squares[index] || checkMoveResult(squares) ){
+		if( calculateWinner(squares) || squares[i] ){
 			return;
 		} 
 		
-		if(xIsNext) nextSquares[index] = "X";
-		else nextSquares[index] = "0";
-		//and flip the boolean:
-		setXIsNext(!xIsNext);
-
-		setSquares(nextSquares);
-		// console.log('calling onPlay')
-		// onPlay(nextSquares);
+		const nextSquares = squares.slice();
 		
-		console.log({index});
-		console.log({nextSquares});
-	};
+		if(xIsNext){
+			nextSquares[i] = "X";
+		} 
+		else {
+			nextSquares[i] = "0";
+		}
+		//and flip the boolean:
+		//setXIsNext(!xIsNext);
+
+		//setSquares(nextSquares);
+		// console.log('calling onPlay')
+		onPlay(nextSquares);
+		
+		// console.log({index});
+		// console.log({nextSquares});
+	}
 	
 	// logic to determine whether an X or a O is to be placed next.
 	// start with X always...
@@ -63,7 +76,7 @@ export default function Board(){
 	// const [squares, setSquares] = useState(Array(9).fill(null));	//now handled by the Game() function
 	
 	//check for a winner on each move
-	const winner = checkMoveResult(squares);	//?
+	const winner = calculateWinner(squares);	//?
 	let status;
 	if(winner){
 		status = "Winner: " + winner;
@@ -95,24 +108,82 @@ export default function Board(){
 }
 
 
-//export default function Game(){
-function Game(){
-	console.log('starting...');
-	// set up states for tis component:
-	const [xIsNext,setXIsNext] = useState(true);
+export default function Game(){
+//function Game(){
+	// console.log('starting...');
+	// set up states for this component:
+	//const [xIsNext,setXIsNext] = useState(true);
+	// because we know that if even numbered moves, xIsNext === true, we can do this (see 
+    // also check later in code)...
 	
 	// initialise our history with a starting state (all nulls):
 	const [history, setHistory] = useState([Array(9).fill(null)]);
 	
+	
+	// we also need to keep track of the move being viewed:
+	const [currentMove, setCurrentMove] = useState(0);
+	
+	// work out xIsNext based on currentMove (even === true):
+	const xIsNext = currentMove % 2 === 0;
+	
 	// now we can calculate the board state from the most recent history item, as long 
 	// as it is set BEFORE we use it...
-	const currentSquares = history[history.length-1]
+	console.log("in GAME: ",history);
+	console.log("len: ",history.length);
+	console.log("starting array: ",history[history.length-1]);
+	
+	// and the currentSquares needs to also account for jumping to a particular game state:
+	// const currentSquares = history[history.length-1]
+	const currentSquares = history[currentMove];
+	
+	
+	console.log("starting array (currentSquares): ",currentSquares);
+	console.log("history (spread-ed)): ",[...history]);
 	
 	function handlePlay(nextSquares){
-		setHistory([...history,nextSquares]);	//array 'spread' syntax
-		setXIsNext(!xIsNext);
+		// setHistory([...history, nextSquares]);	//array 'spread' syntax - ALL items, but see below:
+		// here, we now reset the history if we jump back to a point in time (from jumpTo(), below)
+		const nextHistory = [...history.slice(0, currentMove+1), nextSquares];
+		setHistory(nextHistory);
+		
+		// and set the currentMove state:
+		setCurrentMove(nextHistory.length-1);
+		
+		// setXIsNext(!xIsNext);
 	}
-	console.log("GAME: ",history,currentSquares);
+	// console.log("GAME: ",history,currentSquares);
+
+	//placeholder for handler to access game state history:
+	// nextMove is NOT a React component!
+	function jumpTo(nextMove){
+		// when this function is called, jump to the specified move index:
+		setCurrentMove(nextMove);
+		// and work out whether that move was an X or a 0:
+		// setXIsNext(nextMove % 2 === 0); //i.e. is it an odd or even numbered move., so we can remove the xIsNext state var!
+	}
+	
+	// use JS map() to translate the history of moves into an array of React components:
+	const moves = history.map(
+		(squares, move) => {
+			let description;
+			if(move > 0){
+				description = 'Go to move #' + move;
+			}
+			else{
+				description = 'Go to game start';
+			};				
+			{/* see notes on tutorial: a key needs to be unique for the list scope. In this case, we
+				are OK to use the move number because the list will not be changed otherwise.  */}
+			return (
+				<li key={move}>
+					<button onClick={ () => jumpTo(move) }>
+						{description}
+					</button>
+				</li>
+			);
+		}
+	);
+
 	return(
 		<div className="game">
 			<div className="game-board">
@@ -120,20 +191,20 @@ function Game(){
 			</div>
 			<div className="game-info">
 				<ol>
-					{/* TODO! */}
+					{moves} {/*call the history function to render the move list. Note the use of key*/}
 				</ol>
 			</div>
 		</div>
-	)
+	);
 }
 
 
 
 
 /* take the current state and check if 3-in-a-row, and which player */
-function checkMoveResult(squares){
+function calculateWinner(squares){
 	console.log('checking game status...')
-	const winningLines = [
+	const lines = [
 		[0,1,2], //top row
 		[3,4,5], //middle row
 		[6,7,8], //bottom row
@@ -144,8 +215,8 @@ function checkMoveResult(squares){
 		[2,4,6]  // '/'
 	];
 	console.log(squares)
-	for(let i=0;i<winningLines.length;i++){
-		const [a,b,c] = winningLines[i];
+	for(let i=0;i<lines.length;i++){
+		const [a,b,c] = lines[i];
 		if(squares[a] && squares[a]===squares[b] && squares[a]===squares[c]){
 			console.log('matched winning line ',i)
 			return squares[a]; //will be 'X' or '0'
@@ -156,11 +227,11 @@ function checkMoveResult(squares){
 }
 
 
-/* come back to this. note the braces arount the nested react value: */
-function get_square(val){
-	return <button className="square">{val}</button>;
-}
-
-function get_row(squares){
-	return <div className="board-row">{squares}</div>
-}
+///* come back to this. note the braces arount the nested react value: */
+//function get_square(val){
+//	return <button className="square">{val}</button>;
+//}
+//
+//function get_row(squares){
+//	return <div className="board-row">{squares}</div>
+//}
